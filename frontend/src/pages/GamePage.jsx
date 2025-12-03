@@ -5,7 +5,7 @@ import { Upload } from 'lucide-react';
 
 const GamePage = () => {
   const canvasRef = useRef(null);
-  const [gameState, setGameState] = useState('ready'); // ready, playing, gameOver
+  const [gameState, setGameState] = useState('menu'); // menu, ready, playing, paused, gameOver
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [faceImage, setFaceImage] = useState(null);
@@ -29,11 +29,16 @@ const GamePage = () => {
     const savedHighScore = localStorage.getItem('flappyHighScore');
     if (savedHighScore) setHighScore(parseInt(savedHighScore));
 
-    // Load face image from public assets (transparent PNG recommended)
+    // Load face image
+    const savedImage = localStorage.getItem('flappyFaceImage');
     const img = new Image();
-    const faceSrc = process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/assets/character.png' : 'assets/character.png';
-    img.src = faceSrc;
     img.onload = () => setFaceImage(img);
+    if (savedImage) {
+      img.src = savedImage;
+    } else {
+      const defaultFaceSrc = process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/assets/character.png' : 'assets/character.png';
+      img.src = defaultFaceSrc;
+    }
 
     // Preload fart sound from assets
     try {
@@ -102,67 +107,7 @@ const GamePage = () => {
     return particles;
   };
 
-  const drawCharacterBody = (ctx, x, y, size, rotation) => {
-    ctx.save();
-    ctx.translate(x + size / 2, y + size / 2);
-    ctx.rotate(rotation);
-    
-    const bodyWidth = size * 0.6;
-    const bodyHeight = size * 0.8;
-    
-    // Body (torso)
-    ctx.fillStyle = '#FF6B6B';
-    ctx.beginPath();
-    ctx.ellipse(0, size * 0.15, bodyWidth / 2, bodyHeight / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Pants/shorts
-    ctx.fillStyle = '#4ECDC4';
-    ctx.beginPath();
-    ctx.ellipse(0, size * 0.4, bodyWidth / 2, bodyHeight / 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Arms
-    ctx.strokeStyle = '#FFD93D';
-    ctx.lineWidth = size * 0.12;
-    ctx.lineCap = 'round';
-    
-    // Left arm
-    ctx.beginPath();
-    ctx.moveTo(-bodyWidth / 2, size * 0.1);
-    ctx.lineTo(-bodyWidth / 1.5, size * 0.3);
-    ctx.stroke();
-    
-    // Right arm  
-    ctx.beginPath();
-    ctx.moveTo(bodyWidth / 2, size * 0.1);
-    ctx.lineTo(bodyWidth / 1.5, size * 0.3);
-    ctx.stroke();
-    
-    // Legs
-    ctx.strokeStyle = '#95E1D3';
-    ctx.lineWidth = size * 0.14;
-    
-    // Left leg
-    ctx.beginPath();
-    ctx.moveTo(-bodyWidth / 4, size * 0.5);
-    ctx.lineTo(-bodyWidth / 3, size * 0.75);
-    ctx.stroke();
-    
-    // Right leg
-    ctx.beginPath();
-    ctx.moveTo(bodyWidth / 4, size * 0.5);
-    ctx.lineTo(bodyWidth / 3, size * 0.75);
-    ctx.stroke();
-    
-    // Butt highlight (where fart comes from)
-    ctx.fillStyle = 'rgba(255, 182, 193, 0.6)';
-    ctx.beginPath();
-    ctx.ellipse(-2, size * 0.45, size * 0.15, size * 0.12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.restore();
-  };
+
 
   const jump = () => {
     if (gameState === 'ready') {
@@ -177,6 +122,14 @@ const GamePage = () => {
         gameDataRef.current.bird.y
       );
       gameDataRef.current.fartParticles.push(...newParticles);
+    }
+  };
+
+  const togglePause = () => {
+    if (gameState === 'playing') {
+      setGameState('paused');
+    } else if (gameState === 'paused') {
+      setGameState('playing');
     }
   };
 
@@ -436,7 +389,7 @@ const GamePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-400 to-purple-500 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
         <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
-          Flappy Fart-eev
+          Flappy Fart
         </h1>
         
         <div className="flex justify-between items-center mb-6">
@@ -461,6 +414,29 @@ const GamePage = () => {
             style={{ maxWidth: '500px', height: 'auto' }}
           />
           
+          {gameState === 'menu' && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-white/95 rounded-2xl p-8 text-center shadow-xl">
+                <h2 className="text-3xl font-bold mb-4 text-gray-800">Flappy Fart</h2>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    onClick={() => setGameState('ready')}
+                    className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
+                  >
+                    Start Game
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/upload')}
+                    className="pointer-events-auto bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Change Face
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {gameState === 'ready' && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="bg-white/95 rounded-2xl p-8 text-center shadow-xl">
@@ -471,24 +447,55 @@ const GamePage = () => {
             </div>
           )}
 
+          {gameState === 'paused' && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-white/95 rounded-2xl p-8 text-center shadow-xl">
+                <h2 className="text-3xl font-bold mb-4 text-gray-800">Paused</h2>
+                <Button
+                  onClick={togglePause}
+                  className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
+                >
+                  Resume
+                </Button>
+              </div>
+            </div>
+          )}
+
           {gameState === 'gameOver' && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="bg-white/95 rounded-2xl p-8 text-center shadow-xl">
                 <h2 className="text-3xl font-bold mb-4 text-red-600">Game Over!</h2>
                 <p className="text-xl mb-2">Score: <span className="font-bold text-orange-600">{score}</span></p>
                 <p className="text-lg mb-6">High Score: <span className="font-bold text-purple-600">{highScore}</span></p>
-                <Button
-                  onClick={resetGame}
-                  className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
-                >
-                  Play Again
-                </Button>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    onClick={resetGame}
+                    className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
+                  >
+                    Play Again
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/upload')}
+                    className="pointer-events-auto bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Change Face
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         <div className="mt-6 text-center space-y-3">
+          {gameState === 'playing' && (
+            <Button
+              onClick={togglePause}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold"
+            >
+              Pause
+            </Button>
+          )}
           <p className="text-sm text-gray-600">Click to fart and fly! Avoid the pipes!</p>
           {null}
         </div>
