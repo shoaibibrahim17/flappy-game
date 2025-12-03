@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/flappy-game/static/css/main.984bb08a.css",
+    "main.js": "/flappy-game/static/js/main.2ed2a823.js",
+    "index.html": "/flappy-game/index.html",
+    "main.984bb08a.css.map": "/flappy-game/static/css/main.984bb08a.css.map",
+    "main.2ed2a823.js.map": "/flappy-game/static/js/main.2ed2a823.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.984bb08a.css",
+    "static/js/main.2ed2a823.js"
+  ]
+}
