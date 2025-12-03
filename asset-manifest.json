@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/flappy-game/static/css/main.5d22de95.css",
-    "main.js": "/flappy-game/static/js/main.cff89c1e.js",
+    "main.js": "/flappy-game/static/js/main.b6c64129.js",
     "index.html": "/flappy-game/index.html",
     "main.5d22de95.css.map": "/flappy-game/static/css/main.5d22de95.css.map",
-    "main.cff89c1e.js.map": "/flappy-game/static/js/main.cff89c1e.js.map"
+    "main.b6c64129.js.map": "/flappy-game/static/js/main.b6c64129.js.map"
   },
   "entrypoints": [
     "static/css/main.5d22de95.css",
-    "static/js/main.cff89c1e.js"
+    "static/js/main.b6c64129.js"
   ]
 }
