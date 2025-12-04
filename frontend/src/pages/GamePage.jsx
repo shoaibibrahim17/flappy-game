@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Upload } from 'lucide-react';
 
@@ -13,11 +12,11 @@ const GamePage = () => {
   const gameDataRef = useRef({
     bird: { x: 80, y: 200, velocity: 0, size: 50 },
     pipes: [],
-    gravity: 0.4,
-    jumpStrength: -8,
-    pipeGap: 200,
+    gravity: 0.3,
+    jumpStrength: -6,
+    pipeGap: 250,
     pipeWidth: 60,
-    pipeSpeed: 2,
+    pipeSpeed: 1.5,
     frameCount: 0,
     fartParticles: []
   });
@@ -29,16 +28,11 @@ const GamePage = () => {
     const savedHighScore = localStorage.getItem('flappyHighScore');
     if (savedHighScore) setHighScore(parseInt(savedHighScore));
 
-    // Load face image
-    const savedImage = localStorage.getItem('flappyFaceImage');
+    // Load default friend's face image
     const img = new Image();
     img.onload = () => setFaceImage(img);
-    if (savedImage) {
-      img.src = savedImage;
-    } else {
-      const defaultFaceSrc = process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/assets/character.png' : 'assets/character.png';
-      img.src = defaultFaceSrc;
-    }
+    const defaultFaceSrc = process.env.PUBLIC_URL ? process.env.PUBLIC_URL + '/assets/character.png' : 'assets/character.png';
+    img.src = defaultFaceSrc;
 
     // Preload fart sound from assets
     try {
@@ -250,51 +244,56 @@ const GamePage = () => {
         ctx.restore();
       });
 
-      // Draw bird with face (squash & stretch)
-      if (faceImage && faceImage.complete) {
-        ctx.save();
-        const rotation = Math.min(Math.max(data.bird.velocity * 0.05, -0.5), 0.5);
-        const squash = Math.max(Math.min(-data.bird.velocity * 0.03, 0.25), -0.2);
-        const scaleX = 1 - squash;
-        const scaleY = 1 + squash;
-        ctx.translate(data.bird.x + data.bird.size / 2, data.bird.y + data.bird.size / 2);
-        ctx.rotate(rotation);
-        ctx.scale(scaleX, scaleY);
-        
-        // Draw circle clip for face
-        ctx.beginPath();
-        ctx.arc(0, 0, data.bird.size / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        
-        // Draw face image (transparent PNG recommended)
-        ctx.drawImage(
-          faceImage,
-          -data.bird.size / 2,
-          -data.bird.size / 2,
-          data.bird.size,
-          data.bird.size
-        );
-        ctx.restore();
-        
-        // Draw border around face
-        ctx.save();
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(data.bird.x + data.bird.size / 2, data.bird.y + data.bird.size / 2, data.bird.size / 2, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      } else {
-        // Default yellow circle
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(data.bird.x + data.bird.size / 2, data.bird.y + data.bird.size / 2, data.bird.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#FFA500';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
+      // Draw bird with face and animated body (squash & stretch)
+      ctx.save();
+      const rotation = Math.min(Math.max(data.bird.velocity * 0.05, -0.5), 0.5);
+      const squash = Math.max(Math.min(-data.bird.velocity * 0.03, 0.25), -0.2);
+      const scaleX = 1 - squash;
+      const scaleY = 1 + squash;
+      ctx.translate(data.bird.x + data.bird.size / 2, data.bird.y + data.bird.size / 2);
+      ctx.rotate(rotation);
+      ctx.scale(scaleX, scaleY);
+
+      // Draw body (rectangle below head)
+      const bodyHeight = data.bird.size * 0.8;
+      const bodyWidth = data.bird.size * 0.6;
+      ctx.fillStyle = '#FFD700'; // Same color as head
+      ctx.fillRect(-bodyWidth / 2, data.bird.size / 2, bodyWidth, bodyHeight);
+
+      // Animate body flapping
+      const flap = Math.sin(data.frameCount * 0.2) * 5;
+      ctx.fillRect(-bodyWidth / 2, data.bird.size / 2 + bodyHeight - 10 + flap, bodyWidth, 10);
+
+      // Draw bum (circle at bottom of body)
+      ctx.fillStyle = '#FFA500';
+      ctx.beginPath();
+      ctx.arc(0, data.bird.size / 2 + bodyHeight + 10, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw circle clip for face
+      ctx.beginPath();
+      ctx.arc(0, 0, data.bird.size / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+
+      // Draw face image (transparent PNG recommended)
+      ctx.drawImage(
+        faceImage,
+        -data.bird.size / 2,
+        -data.bird.size / 2,
+        data.bird.size,
+        data.bird.size
+      );
+      ctx.restore();
+
+      // Draw border around face
+      ctx.save();
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(data.bird.x + data.bird.size / 2, data.bird.y + data.bird.size / 2, data.bird.size / 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
 
       // Check boundaries
       if (data.bird.y > canvas.height - data.bird.size || data.bird.y < 0) {
@@ -383,8 +382,6 @@ const GamePage = () => {
     }
   }, [gameState, faceImage]);
 
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-pink-400 to-purple-500 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
@@ -424,13 +421,6 @@ const GamePage = () => {
                     className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
                   >
                     Start Game
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="pointer-events-auto bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Change Face
                   </Button>
                 </div>
               </div>
@@ -473,13 +463,6 @@ const GamePage = () => {
                     className="pointer-events-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
                   >
                     Play Again
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/upload')}
-                    className="pointer-events-auto bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Change Face
                   </Button>
                 </div>
               </div>
